@@ -16,19 +16,12 @@ services:
       - qdrant_data:/qdrant/storage               # Persist vector data
     environment:
       - QDRANT__SERVICE__GRPC_PORT=6334
-      - QDRANT__STORAGE__STORAGE_PATH=/qdrant/storage
     deploy:
       resources:
         limits:
           memory: 1G
     networks:
       - nara-net
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:6333/healthz || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
   # ─── NARA Frontend (React + Nginx) ─────────────────────────
   frontend:
@@ -49,16 +42,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"     # Akses Ollama di host
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant                                    # Start after qdrant, no health gate
     networks:
       - nara-net
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8391/ || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
 # ─── Networks ────────────────────────────────────────────────
 networks:
