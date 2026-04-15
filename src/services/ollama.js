@@ -1,6 +1,7 @@
 import { getOllamaUrl, DEFAULT_MODEL, OLLAMA_OPTIONS } from './config';
 import { knowledgeBase } from './knowledgeBase';
 import { vectorDB } from './vectorDB';
+import { searchWeb, formatSearchResults } from './webSearch';
 
 // ─── Health Check ─────────────────────────────────────────────
 export async function checkOllamaHealth() {
@@ -27,7 +28,7 @@ export async function listModels() {
 async function getKnowledgeContext(userMessage) {
   const formatResults = (results) =>
     results.map(r =>
-      `[${r.source} — ${new Date(r.date).toLocaleDateString('id-ID')}]\n${r.title}\n${r.content}`
+      `[${r.source} — ${r.date ? new Date(r.date).toLocaleDateString('id-ID') : 'terkini'}]\n${r.title}\n${r.content}`
     ).join('\n\n');
 
   try {
@@ -64,14 +65,29 @@ async function getKnowledgeContext(userMessage) {
       }
     }
 
-    // 3. Last resort: keyword search di IndexedDB
+    // 3. Keyword search di IndexedDB
     const kwResults = knowledgeBase.searchByKeyword(userMessage, 3);
     if (kwResults.length > 0) {
       console.log(`[AutoKnowledge] Keyword: ${kwResults.length} results`);
       return formatResults(kwResults);
     }
   } catch (e) {
-    console.warn('[AutoKnowledge] Search failed:', e);
+    console.warn('[AutoKnowledge] Knowledge base search failed:', e);
+  }
+
+  // 4. Real-time web search (DuckDuckGo) — selalu coba jika online
+  if (navigator.onLine) {
+    try {
+      console.log(`[AutoKnowledge] Web search for: "${userMessage}"`);
+      const webResults = await searchWeb(userMessage, 3);
+      const webContext = formatSearchResults(webResults);
+      if (webContext) {
+        console.log(`[AutoKnowledge] Web: ${webResults.length} results`);
+        return webContext;
+      }
+    } catch (e) {
+      console.warn('[AutoKnowledge] Web search failed:', e);
+    }
   }
 
   return null;
@@ -88,7 +104,7 @@ export async function chatOllamaStream({
   onError,
   signal, // AbortController.signal
 }) {
-  // Auto-inject knowledge dari knowledge base
+  // Auto-inject knowledge dari knowledge base + web search
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const knowledgeContext = lastUserMsg
     ? await getKnowledgeContext(lastUserMsg.content)
