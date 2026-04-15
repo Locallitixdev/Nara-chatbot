@@ -1,55 +1,10 @@
 # ═══════════════════════════════════════════════════════════════
 #  NARA AI Assistant — Docker Compose
+#  Ollama sudah berjalan di host, tidak perlu container sendiri
 #  Semua port menggunakan non-standard untuk keamanan
 # ═══════════════════════════════════════════════════════════════
 
 services:
-  # ─── Ollama LLM Server ─────────────────────────────────────
-  ollama:
-    image: ollama/ollama:latest
-    container_name: nara-ollama
-    restart: unless-stopped
-    ports:
-      - "${OLLAMA_PORT:-11434}:11434"           # Internal tetap 11434, host port bisa diubah
-    volumes:
-      - ollama_data:/root/.ollama               # Persist model data
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
-      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-2}
-    deploy:
-      resources:
-        reservations:
-          memory: 4G
-    networks:
-      - nara-net
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 15s
-
-  # ─── Model Seeder (one-shot) ───────────────────────────────
-  # Otomatis pull model saat pertama kali docker compose up
-  ollama-seed:
-    image: ollama/ollama:latest
-    container_name: nara-ollama-seed
-    depends_on:
-      ollama:
-        condition: service_healthy
-    entrypoint: >
-      sh -c "
-        echo '⏳ Pulling model: ${OLLAMA_MODEL:-llama3.2:1b}...' &&
-        ollama pull ${OLLAMA_MODEL:-llama3.2:1b} &&
-        echo '✅ Model ready!'
-      "
-    environment:
-      - OLLAMA_HOST=ollama:11434
-    networks:
-      - nara-net
-    restart: "no"
-
   # ─── NARA Frontend (React + Nginx) ─────────────────────────
   frontend:
     build:
@@ -66,9 +21,8 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-8391}:8391"
-    depends_on:
-      ollama:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"     # Akses Ollama di host
     networks:
       - nara-net
     healthcheck:
@@ -83,8 +37,3 @@ networks:
   nara-net:
     driver: bridge
     name: nara-network
-
-# ─── Volumes ─────────────────────────────────────────────────
-volumes:
-  ollama_data:
-    name: nara-ollama-data
