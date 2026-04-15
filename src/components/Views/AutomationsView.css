@@ -1,0 +1,266 @@
+.automations-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg);
+}
+
+.automations-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ─── OpenClaw Status Card ─────────────────────────────────── */
+
+.openclaw-status {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+}
+
+.openclaw-status.connected {
+  border-color: oklch(50% 0.14 160 / 0.3);
+  background: oklch(50% 0.14 160 / 0.04);
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-border-strong);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.active {
+  background: oklch(50% 0.14 160);
+  animation: pulse 2s infinite;
+}
+
+.status-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.status-badge {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.status-badge.success {
+  background: oklch(50% 0.14 160 / 0.12);
+  color: oklch(45% 0.12 160);
+}
+
+.status-badge.inactive {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
+.status-refresh {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.status-refresh:hover {
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+}
+
+.status-refresh:disabled {
+  opacity: 0.4;
+}
+
+.status-detail {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.status-detail code {
+  background: var(--color-surface-raised);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+}
+
+/* ─── Automations List ─────────────────────────────────────── */
+
+.automations-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.automation-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  animation: slideUp var(--duration-normal) var(--ease-out-quint) calc(var(--i) * 50ms) backwards;
+  transition: all var(--duration-fast) var(--ease-out-quart);
+}
+
+.automation-item:hover {
+  border-color: var(--color-border-strong);
+}
+
+.automation-item.enabled {
+  border-color: oklch(50% 0.14 160 / 0.3);
+  background: oklch(50% 0.14 160 / 0.04);
+}
+
+.automation-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.automation-item.enabled .automation-icon {
+  background: oklch(50% 0.14 160 / 0.12);
+  color: oklch(45% 0.12 160);
+}
+
+.automation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.automation-name {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.automation-desc {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Toggle ───────────────────────────────────────────────── */
+
+.automation-toggle {
+  flex-shrink: 0;
+  padding: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.toggle-track {
+  display: block;
+  width: 48px;
+  height: 28px;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  position: relative;
+  transition: background var(--duration-fast) var(--ease-out-quart);
+}
+
+.automation-toggle.on .toggle-track {
+  background: oklch(50% 0.14 160);
+}
+
+.toggle-thumb {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform var(--duration-fast) var(--ease-out-quart);
+  box-shadow: var(--shadow-md);
+}
+
+.automation-toggle.on .toggle-thumb {
+  transform: translateX(20px);
+}
+
+.automation-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Coming Soon ──────────────────────────────────────────── */
+
+.coming-soon {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: oklch(52% 0.14 45 / 0.06);
+  border: 1px solid oklch(52% 0.14 45 / 0.15);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+}
+
+.coming-soon svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.coming-title {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.coming-desc {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Responsive ───────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .automation-item {
+    flex-wrap: wrap;
+  }
+
+  .automation-toggle {
+    width: 100%;
+    padding: var(--space-3) 0 0;
+  }
+}

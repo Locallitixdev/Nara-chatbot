@@ -1,0 +1,90 @@
+# ═══════════════════════════════════════════════════════════════
+#  NARA AI Assistant — Docker Compose
+#  Semua port menggunakan non-standard untuk keamanan
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ─── Ollama LLM Server ─────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nara-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"           # Internal tetap 11434, host port bisa diubah
+    volumes:
+      - ollama_data:/root/.ollama               # Persist model data
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-2}
+    deploy:
+      resources:
+        reservations:
+          memory: 4G
+    networks:
+      - nara-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  # ─── Model Seeder (one-shot) ───────────────────────────────
+  # Otomatis pull model saat pertama kali docker compose up
+  ollama-seed:
+    image: ollama/ollama:latest
+    container_name: nara-ollama-seed
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo '⏳ Pulling model: ${OLLAMA_MODEL:-llama3.2:1b}...' &&
+        ollama pull ${OLLAMA_MODEL:-llama3.2:1b} &&
+        echo '✅ Model ready!'
+      "
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    networks:
+      - nara-net
+    restart: "no"
+
+  # ─── NARA Frontend (React + Nginx) ─────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_OLLAMA_BASE_URL: /api/ollama
+        VITE_DEFAULT_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+        VITE_OPENCLAW_BASE_URL: ${OPENCLAW_URL:-http://127.0.0.1:9847}
+        VITE_OPENCLAW_TOKEN: ${OPENCLAW_TOKEN:-}
+        VITE_APP_NAME: ${APP_NAME:-NARA AI Assistant}
+        VITE_APP_VERSION: ${APP_VERSION:-1.0.0}
+    container_name: nara-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8391}:8391"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - nara-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8391/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# ─── Networks ────────────────────────────────────────────────
+networks:
+  nara-net:
+    driver: bridge
+    name: nara-network
+
+# ─── Volumes ─────────────────────────────────────────────────
+volumes:
+  ollama_data:
+    name: nara-ollama-data

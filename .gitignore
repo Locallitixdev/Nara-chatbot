@@ -1,0 +1,52 @@
+# ═══════════════════════════════════════════════════════════════
+#  NARA AI Assistant — .gitignore
+# ═══════════════════════════════════════════════════════════════
+
+# ─── Dependencies ─────────────────────────────────────────────
+node_modules/
+
+# ─── Build Output ─────────────────────────────────────────────
+dist/
+dist-ssr/
+
+# ─── Rust / Tauri ─────────────────────────────────────────────
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ─── Environment (secrets, tokens) ───────────────────────────
+.env
+.env.local
+.env.docker
+.env.production
+.env.*.local
+
+# ─── IDE / Editor ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── OS Generated ────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# ─── AI / Agents ─────────────────────────────────────────────
+.agents/
+.gemini/
+
+# ─── Docker (runtime) ────────────────────────────────────────
+docker-compose.override.yml

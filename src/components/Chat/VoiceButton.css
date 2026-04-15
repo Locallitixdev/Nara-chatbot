@@ -1,0 +1,175 @@
+.voice-button-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Voice Button ─────────────────────────────────────────── */
+
+.voice-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out-quart);
+  overflow: visible;
+}
+
+.voice-btn:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.voice-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.voice-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Recording state */
+.voice-btn.recording {
+  background: oklch(55% 0.18 25 / 0.12);
+  color: var(--color-error);
+  border-color: oklch(50% 0.16 25 / 0.4);
+}
+
+.voice-btn.recording:hover {
+  background: oklch(55% 0.18 25 / 0.2);
+}
+
+/* Transcribing state */
+.voice-btn.transcribing {
+  background: oklch(52% 0.14 45 / 0.1);
+  color: var(--color-primary);
+  border-color: oklch(52% 0.14 45 / 0.3);
+}
+
+/* ─── Animated Ring ────────────────────────────────────────── */
+
+.voice-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: var(--radius-lg);
+  background: var(--color-error);
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ─── Icon ─────────────────────────────────────────────────── */
+
+.voice-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Spinner ──────────────────────────────────────────────── */
+
+.voice-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ─── Recording Status Bar ─────────────────────────────────── */
+
+.voice-status {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  max-width: 280px;
+  animation: slideUp var(--duration-fast) var(--ease-out-quint);
+  z-index: 10;
+}
+
+.voice-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-error);
+  flex-shrink: 0;
+  animation: pulse 1.5s infinite;
+}
+
+.voice-status-text {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.voice-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--duration-fast);
+}
+
+.voice-cancel:hover {
+  color: var(--color-error);
+  background: oklch(50% 0.16 25 / 0.1);
+}
+
+/* ─── Error ────────────────────────────────────────────────── */
+
+.voice-error {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  right: 0;
+  padding: var(--space-2) var(--space-3);
+  background: oklch(50% 0.16 25 / 0.1);
+  border: 1px solid oklch(50% 0.16 25 / 0.3);
+  border-radius: var(--radius-md);
+  font-size: 0.7rem;
+  color: var(--color-error);
+  white-space: nowrap;
+  animation: slideUp var(--duration-fast) var(--ease-out-quint);
+  z-index: 10;
+}
+
+/* ─── Responsive ───────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .voice-status {
+    max-width: 200px;
+  }
+
+  .voice-status-text {
+    max-width: 120px;
+  }
+}
