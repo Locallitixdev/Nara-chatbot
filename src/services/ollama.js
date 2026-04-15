@@ -90,12 +90,34 @@ export async function chatOllamaStream({
 
 // ─── System Prompt Builder ────────────────────────────────────
 function buildSystemPrompt(custom, ragContext) {
+  // Inject current date & time so model always knows
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  });
+  const timeStr = now.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'Asia/Jakarta',
+    hour12: false,
+  });
+
   const base = `Kamu adalah NARA — AI Assistant lokal untuk Indonesia.
 Berjalan 100% di perangkat pengguna, tidak ada data dikirim ke internet.
 Fasih Bahasa Indonesia dan Inggris, prioritaskan Bahasa Indonesia.
 Fokus membantu UMKM, remote worker, dan profesional Indonesia.
 Berikan respons yang actionable, konkret, dan relevan konteks Indonesia.
-Gunakan markdown untuk format respons yang lebih baik.`;
+Gunakan markdown untuk format respons yang lebih baik.
+
+[WAKTU SAAT INI]
+Tanggal: ${dateStr}
+Jam: ${timeStr} WIB
+[END WAKTU]`;
 
   const ragSection = ragContext
     ? `\n\n[DOKUMEN AKTIF RAG]\n${ragContext}\n[END RAG]`
