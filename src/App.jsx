@@ -9,6 +9,7 @@ import SettingsView from "./components/Views/SettingsView";
 import { useOpenClaw } from "./hooks/useOpenClaw";
 import { useTheme } from "./hooks/useTheme";
 import { vectorStore } from "./services/rag";
+import { knowledgeSyncManager } from "./services/knowledgeSync";
 import {
   getAllSessions,
   getActiveSession,
@@ -78,6 +79,10 @@ export default function App() {
     if (task) {
       setLastTask(task);
     }
+
+    // Start background knowledge sync (self-learning)
+    knowledgeSyncManager.start();
+    return () => knowledgeSyncManager.stop();
   }, [setMessages]);
 
   useEffect(() => {

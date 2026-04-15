@@ -1,4 +1,6 @@
 import { getOllamaUrl, DEFAULT_MODEL, OLLAMA_OPTIONS } from './config';
+import { knowledgeBase } from './knowledgeBase';
+import { vectorDB } from './vectorDB';
 
 // ─── Health Check ─────────────────────────────────────────────
 export async function checkOllamaHealth() {
@@ -21,6 +23,60 @@ export async function listModels() {
   return data.models || [];
 }
 
+// ─── Auto Knowledge Search ────────────────────────────────────
+async function getKnowledgeContext(userMessage) {
+  const formatResults = (results) =>
+    results.map(r =>
+      `[${r.source} — ${new Date(r.date).toLocaleDateString('id-ID')}]\n${r.title}\n${r.content}`
+    ).join('\n\n');
+
+  try {
+    // Generate embedding dari pertanyaan user
+    const embRes = await fetch(getOllamaUrl('/api/embeddings'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'nomic-embed-text',
+        prompt: userMessage,
+      }),
+    });
+
+    if (embRes.ok) {
+      const embData = await embRes.json();
+      if (embData.embedding) {
+        // 1. Primary: Search Qdrant vector DB
+        try {
+          const qdrantResults = await vectorDB.searchSimilar(embData.embedding, 5, 0.35);
+          if (qdrantResults.length > 0) {
+            console.log(`[AutoKnowledge] Qdrant: ${qdrantResults.length} results`);
+            return formatResults(qdrantResults);
+          }
+        } catch (e) {
+          console.warn('[AutoKnowledge] Qdrant search failed, falling back:', e);
+        }
+
+        // 2. Fallback: Search IndexedDB (offline mode)
+        const localResults = await knowledgeBase.search(embData.embedding, 3, 0.35);
+        if (localResults.length > 0) {
+          console.log(`[AutoKnowledge] IndexedDB: ${localResults.length} results`);
+          return formatResults(localResults);
+        }
+      }
+    }
+
+    // 3. Last resort: keyword search di IndexedDB
+    const kwResults = knowledgeBase.searchByKeyword(userMessage, 3);
+    if (kwResults.length > 0) {
+      console.log(`[AutoKnowledge] Keyword: ${kwResults.length} results`);
+      return formatResults(kwResults);
+    }
+  } catch (e) {
+    console.warn('[AutoKnowledge] Search failed:', e);
+  }
+
+  return null;
+}
+
 // ─── Chat STREAMING ───────────────────────────────────────────
 export async function chatOllamaStream({
   model = DEFAULT_MODEL,
@@ -32,7 +88,13 @@ export async function chatOllamaStream({
   onError,
   signal, // AbortController.signal
 }) {
-  const systemFull = buildSystemPrompt(systemPrompt, ragContext);
+  // Auto-inject knowledge dari knowledge base
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  const knowledgeContext = lastUserMsg
+    ? await getKnowledgeContext(lastUserMsg.content)
+    : null;
+
+  const systemFull = buildSystemPrompt(systemPrompt, ragContext, knowledgeContext);
 
   try {
     const response = await fetch(getOllamaUrl('/api/chat'), {
@@ -89,7 +151,7 @@ export async function chatOllamaStream({
 }
 
 // ─── System Prompt Builder ────────────────────────────────────
-function buildSystemPrompt(custom, ragContext) {
+function buildSystemPrompt(custom, ragContext, knowledgeContext) {
   // Inject current date & time so model always knows
   const now = new Date();
   const dateStr = now.toLocaleDateString('id-ID', {
@@ -119,11 +181,16 @@ Tanggal: ${dateStr}
 Jam: ${timeStr} WIB
 [END WAKTU]`;
 
+  // Knowledge base context (otomatis dari background sync)
+  const knowledgeSection = knowledgeContext
+    ? `\n\n[PENGETAHUAN TERKINI]\nBerikut informasi terbaru yang relevan dengan pertanyaan pengguna. Gunakan sebagai referensi jika relevan:\n${knowledgeContext}\n[END PENGETAHUAN]`
+    : "";
+
   const ragSection = ragContext
     ? `\n\n[DOKUMEN AKTIF RAG]\n${ragContext}\n[END RAG]`
     : "";
 
-  return base + ragSection + (custom ? `\n\n${custom}` : "");
+  return base + knowledgeSection + ragSection + (custom ? `\n\n${custom}` : "");
 }
 
 // ─── Pull / Download Model ────────────────────────────────────
