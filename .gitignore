@@ -16,7 +16,6 @@ src-tauri/gen/schemas/
 # ─── Environment (secrets, tokens) ───────────────────────────
 .env
 .env.local
-.env.docker
 .env.production
 .env.*.local
 
